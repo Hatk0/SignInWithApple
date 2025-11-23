@@ -19,4 +19,9 @@ final class MainCoordinator: BaseCoordinator {
         AuthManager.shared.signOut()
         onSignOut?()
     }
+    
+    func deleteAccount() {
+        AuthManager.shared.deleteAccount()
+        onSignOut?()
+    }
 }

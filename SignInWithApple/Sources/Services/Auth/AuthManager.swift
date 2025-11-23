@@ -35,17 +35,15 @@ final class AuthManager {
     
     // MARK: - Public Methods
     
-    func signIn(with creditential: ASAuthorizationAppleIDCredential) {
-        let userId = creditential.user
-        let email = creditential.email ?? currentUser?.email
-        let fullName = [creditential.fullName?.givenName, creditential.fullName?.familyName]
-            .compactMap { $0 }
-            .joined(separator: " ")
+    func signIn(with credential: ASAuthorizationAppleIDCredential) {
+        let userId = credential.user
+        let email = credential.email ?? currentUser?.email
+        let fullName = getFullName(from: credential)
         
         let user = User(
             id: userId,
             email: email,
-            fullName: fullName.isEmpty ? currentUser?.fullName : fullName
+            fullName: fullName
         )
         currentUser = user
         
@@ -57,13 +55,16 @@ final class AuthManager {
     }
     
     func signOut() {
+        try? KeychainManager.shared.delete(for: userIDKey)
+        
+        notifyAuthStateChanged()
+    }
+    
+    func deleteAccount() {
         currentUser = nil
         userDefaults.removeObject(forKey: userKey)
-        do {
-            try KeychainManager.shared.delete(for: userIDKey)
-        } catch {
-            print("[AuthManager] Failed to delete userID from Keychain: \(error)")
-        }
+        try? KeychainManager.shared.delete(for: userIDKey)
+        notifyAuthStateChanged()
     }
     
     @MainActor
@@ -76,7 +77,7 @@ final class AuthManager {
         return try await withCheckedThrowingContinuation { continuation in
             let provider = ASAuthorizationAppleIDProvider()
             provider.getCredentialState(forUserID: userId) { [weak self] state, error in
-                if let error = error {
+                if let error {
                     continuation.resume(throwing: error)
                     return
                 }
@@ -95,6 +96,19 @@ final class AuthManager {
     }
     
     // MARK: - Private Methods
+    
+    private func getFullName(from credential: ASAuthorizationAppleIDCredential) -> String? {
+        if let givenName = credential.fullName?.givenName,
+           let familyName = credential.fullName?.familyName {
+            return "\(givenName) \(familyName)"
+        }
+        
+        if let givenName = credential.fullName?.givenName {
+            return givenName
+        }
+        
+        return currentUser?.fullName
+    }
     
     private func loadUser() {
         guard let data = userDefaults.data(forKey: userKey),

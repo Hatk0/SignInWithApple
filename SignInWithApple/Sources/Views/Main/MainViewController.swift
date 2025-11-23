@@ -21,9 +21,29 @@ class MainViewController: UIViewController {
     private lazy var signOutButton: UIButton = {
         let button = UIButton(type: .system)
         button.setTitle("Sign Out", for: .normal)
+        button.titleLabel?.font = .systemFont(ofSize: 17, weight: .semibold)
         button.addTarget(self, action: #selector(signOutTapped), for: .touchUpInside)
         button.translatesAutoresizingMaskIntoConstraints = false
         return button
+    }()
+    
+    private lazy var deleteAccountButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setTitle("Delete Account", for: .normal)
+        button.setTitleColor(.systemRed, for: .normal)
+        button.titleLabel?.font = .systemFont(ofSize: 17, weight: .semibold)
+        button.addTarget(self, action: #selector(deleteAccountTapped), for: .touchUpInside)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        return button
+    }()
+    
+    private lazy var buttonStackView: UIStackView = {
+        let stack = UIStackView(arrangedSubviews: [signOutButton, deleteAccountButton])
+        stack.axis = .vertical
+        stack.spacing = 16
+        stack.alignment = .center
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        return stack
     }()
     
     // MARK: - Lifecycle
@@ -50,7 +70,7 @@ class MainViewController: UIViewController {
     
     private func setupHierarchy() {
         view.addSubview(userInfoLabel)
-        view.addSubview(signOutButton)
+        view.addSubview(buttonStackView)
     }
     
     private func setupLayout() {
@@ -58,10 +78,10 @@ class MainViewController: UIViewController {
             [
                 userInfoLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
                 userInfoLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-                userInfoLabel.bottomAnchor.constraint(equalTo: signOutButton.topAnchor, constant: -20),
+                userInfoLabel.centerYAnchor.constraint(equalTo: view.centerYAnchor, constant: -50),
                 
-                signOutButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-                signOutButton.centerYAnchor.constraint(equalTo: view.centerYAnchor)
+                buttonStackView.topAnchor.constraint(equalTo: userInfoLabel.bottomAnchor, constant: 40),
+                buttonStackView.centerXAnchor.constraint(equalTo: view.centerXAnchor)
             ]
         )
     }
@@ -83,6 +103,37 @@ class MainViewController: UIViewController {
     // MARK: - Actions
     
     @objc private func signOutTapped() {
-        coordinator?.signOut()
+        let alert = UIAlertController(
+            title: "Sign Out",
+            message: "Are you sure you want to sign out?",
+            preferredStyle: .alert
+        )
+        
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+        alert.addAction(UIAlertAction(title: "Sign Out", style: .default) { [weak self] _ in
+            self?.coordinator?.signOut()
+        })
+        
+        present(alert, animated: true)
+    }
+    
+    @objc private func deleteAccountTapped() {
+        let alert = UIAlertController(
+            title: "Delete Account",
+            message: "Are you sure you want to delete your account? This action cannot be undone. All your data will be permanently deleted.",
+            preferredStyle: .alert
+        )
+        
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+        alert.addAction(
+            UIAlertAction(
+                title: "Delete",
+                style: .destructive
+            ) { [weak self] _ in
+                self?.coordinator?.deleteAccount()
+            }
+        )
+        
+        present(alert, animated: true)
     }
 }
