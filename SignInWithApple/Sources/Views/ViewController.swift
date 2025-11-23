@@ -1,10 +1,3 @@
-//
-//  ViewController.swift
-//  SignInWithApple
-//
-//  Created by Dmitry Yastrebov on 23.11.2025.
-//
-
 import UIKit
 
 class ViewController: UIViewController {
@@ -13,7 +6,4 @@ class ViewController: UIViewController {
         super.viewDidLoad()
         // Do any additional setup after loading the view.
     }
-
-
 }
-
